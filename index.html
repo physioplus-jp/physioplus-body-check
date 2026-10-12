@@ -417,9 +417,9 @@ var GAS_URL = "https://script.google.com/macros/s/AKfycbz5xWEELj9kWUB7rqSpxKT5u8
 window.onCheckResult = function (payload) {
   var el = document.getElementById("saveStatus");
   el.hidden = false;
-  el.textContent = "結果を記録しています…";
-  var ok = function () { el.textContent = "結果を記録しました（匿名）"; };
-  var ng = function (err) { el.textContent = "結果を記録できませんでした（" + ((err && err.message) || err) + "）"; };
+  el.textContent = "";
+  var ok = function () { el.textContent = "ご回答ありがとうございました"; };
+  var ng = function (err) { el.textContent = "ご回答ありがとうございました（通信エラー）（" + ((err && err.message) || err) + "）"; };
 
   if (window.google && google.script && google.script.run) {
     google.script.run.withSuccessHandler(ok).withFailureHandler(ng).saveResult(payload);
