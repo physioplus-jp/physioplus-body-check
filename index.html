@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base target="_top">
+</head>
+<body>
+<title>今の身体の現状を確認するためのセルフチェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Barlow:wght@500;600;700&display=swap">
+<style>
+/* Layout: one-column phone-first flow — intro → one question per screen → result (body map + meters + care plan) */
+:root{
+  --bg:#F3F6F5; --surface:#FFFFFF; --ink:#1D2A30; --muted:#5E6E72; --line:#DCE4E2;
+  --teal:#1E9BB0; --green:#6CC45A; --navy:#2E3047; --body:#E3EAE8;
+  --good:#3FA65B; --good-bg:#E5F4E8; --warn:#D9921C; --warn-bg:#FBF0DC; --care:#D9584A; --care-bg:#FBE6E3;
+  --grad:linear-gradient(100deg,#1E9BB0 0%,#4CBF8C 55%,#86D26A 100%);
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-num:"Barlow","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121A1C; --surface:#1A2427; --ink:#E6EEEC; --muted:#9AAAA9; --line:#2C3A3D;
+  --teal:#38B6CA; --green:#7DD26B; --navy:#2A2C44; --body:#2A373A;
+  --good:#5CC377; --good-bg:#1D3326; --warn:#EBAA3E; --warn-bg:#3A2F18; --care:#EE7466; --care-bg:#3D2320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121A1C; --surface:#1A2427; --ink:#E6EEEC; --muted:#9AAAA9; --line:#2C3A3D;
+  --teal:#38B6CA; --green:#7DD26B; --navy:#2A2C44; --body:#2A373A;
+  --good:#5CC377; --good-bg:#1D3326; --warn:#EBAA3E; --warn-bg:#3A2F18; --care:#EE7466; --care-bg:#3D2320; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+img,svg{max-width:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-display);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.35}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* Header */
+.brand{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin-bottom:16px}
+.brand b{color:var(--ink);font-weight:900;letter-spacing:.01em}
+.brand b span{font-weight:400}
+
+/* Intro */
+.hero{background:var(--grad);color:#fff;border-radius:18px;padding:28px 22px;display:grid;gap:14px}
+.hero .eyebrow{font-size:12px;letter-spacing:.12em;font-weight:700;opacity:.9}
+.hero h1{font-size:clamp(26px,6.4vw,34px);font-weight:900}
+.hero p{margin:0;font-size:15px;opacity:.95}
+.timebadge{justify-self:start;display:inline-flex;align-items:baseline;gap:2px;background:#fff;color:#1D2A30;border-radius:999px;padding:6px 16px;font-size:14px;font-weight:700}
+.timebadge b{font-size:22px;line-height:1;color:#1E9BB0;margin:0 2px}
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+.cat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-weight:700;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.how{margin:18px 2px 0;color:var(--muted);font-size:13.5px;display:grid;gap:4px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:999px;padding:15px 26px;font-size:16px;font-weight:700;background:var(--navy);color:#fff;width:100%;margin-top:20px;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+
+/* Quiz */
+.progress{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
+.bar{flex:1;height:6px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--grad);transition:width .25s}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 20px 20px;margin-top:16px}
+.qtag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.qtext{font-size:clamp(19px,5vw,23px);font-weight:700;margin:12px 0 22px;min-height:3.2em}
+.answers{display:grid;gap:10px}
+.ans{display:flex;justify-content:space-between;align-items:center;width:100%;padding:16px 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px;font-weight:700;text-align:left;transition:border-color .12s,background .12s}
+.ans small{font-weight:500;color:var(--muted);font-size:12.5px}
+.ans:hover{border-color:var(--teal)}
+.ans.sel{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,var(--surface))}
+.spq-val{display:flex;align-items:baseline;justify-content:center;gap:4px;font-size:22px;color:var(--muted);margin-bottom:8px}
+.spq-val #spqShow{font-size:56px;font-weight:700;color:var(--ink);line-height:1}
+#spqRange{width:100%;accent-color:var(--teal);height:28px}
+.spq-scale{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.spq-num{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:14px;color:var(--muted)}
+.spq-num input{width:84px;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:600 18px var(--f-num);text-align:right}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.spq-res{margin-top:14px;display:grid;gap:12px}
+.spq-head{font-weight:900;font-size:16px}
+.spq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.spq-grid div{display:grid;gap:2px}
+.spq-grid .lbl{font-size:12.5px;color:var(--muted)}
+.spq-grid b{font-size:34px;font-weight:700;line-height:1.1}
+.spq-grid b small{font-size:16px;color:var(--muted);font-weight:500;margin-left:2px}
+#rLoss{color:var(--care)}
+.spqbar{height:12px}
+.spqbar i{border-radius:0}
+.spq-note{margin:0;font-size:12.5px;color:var(--muted)}
+.qnav{display:flex;justify-content:space-between;margin-top:14px}
+.link{background:none;border:0;color:var(--muted);font-size:14px;padding:6px 2px}
+.link:disabled{opacity:.35;cursor:default}
+
+/* Result */
+.rhead{display:grid;gap:8px;margin-bottom:18px}
+.rhead .eyebrow{font-size:12px;letter-spacing:.12em;font-weight:700;color:var(--teal)}
+.rhead h2{font-size:clamp(22px,5.8vw,28px);font-weight:900}
+.rhead p{margin:0;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+.viz{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:520px){.viz{grid-template-columns:1fr}.figure{max-width:220px;margin:0 auto}}
+.figure svg{width:100%;height:auto;display:block}
+.zone{transition:fill .4s}
+.zone.pulse{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.zone.pulse{animation:none}.bar i,.meter i{transition:none}}
+.meters{display:grid;gap:14px}
+.mrow{display:grid;gap:6px;background:none;border:0;padding:0;text-align:left;color:inherit;width:100%}
+.mtop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:14.5px}
+.chip{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.chip.good{color:var(--good);background:var(--good-bg)}
+.chip.warn{color:var(--warn);background:var(--warn-bg)}
+.chip.care{color:var(--care);background:var(--care-bg)}
+.meter{height:10px;background:var(--line);border-radius:10px;overflow:hidden;display:flex}
+.meter i{display:block;height:100%;border-radius:10px;transition:width .6s ease}
+.mscore{font-size:12px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.time{font-size:12.5px;color:var(--muted);margin-top:10px;text-align:right}
+
+h3.sec{font-size:18px;font-weight:900;margin:30px 0 4px}
+.secnote{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.plan{display:grid;gap:12px}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:10px}
+.ex-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.ex h4{margin:0;font-size:16px;font-weight:700;line-height:1.4}
+.ex .type{font-size:11.5px;font-weight:700;color:var(--teal);letter-spacing:.06em;display:block;margin-bottom:2px}
+.dose{background:var(--navy);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;white-space:nowrap;display:flex;align-items:baseline;gap:6px}
+.dose b{font-family:var(--f-num);font-size:20px;font-weight:600;line-height:1}
+.ex ol{margin:0;padding-left:1.3em;color:var(--ink);font-size:14px;display:grid;gap:4px}
+.ex .src{font-size:12px;color:var(--muted)}
+details.more{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 18px}
+details.more summary{padding:12px 0;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:"＋";color:var(--muted)}
+details.more[open] summary::after{content:"－"}
+details.more .plan{padding-bottom:16px}
+.maintain{background:var(--good-bg);border-radius:14px;padding:16px 18px;font-size:14px}
+.maintain b{color:var(--good)}
+.notice{margin-top:28px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.actions{display:grid;grid-template-columns:1fr;gap:0}
+</style>
+
+<div class="wrap">
+  <div class="brand"><b>Physio<span>plus</span></b><span>デスクワーカーのためのボディケア講座</span></div>
+
+  <!-- INTRO -->
+  <section id="intro">
+    <div class="hero">
+      <span class="eyebrow">座りっぱなしの姿勢をリセット</span>
+      <h1>今の身体の現状を確認するためのセルフチェック</h1>
+      <span class="timebadge">所要時間：<b class="num">30</b>秒</span>
+      <p>質問に答えるだけで、いまのあなたに一番必要なボディケアがわかります。</p>
+    </div>
+    <div class="cats" id="catList"></div>
+    <div class="how">
+      <span>・最初の1問は、仕事の出来を1〜100%で答えます</span>
+      <span>・続く12問は「はい／ときどき／いいえ」で答えます</span>
+      <span>・直近1〜2週間の状態を思い浮かべてください</span>
+      <span>・あまり考えず、直感で答えましょう</span>
+      <span>・回答は個人を特定しない形で記録し、講座の集計に利用します</span>
+    </div>
+    <button class="btn" id="startBtn">チェックをはじめる</button>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" hidden>
+    <div class="progress"><span class="num" id="qCount">1 / 12</span><div class="bar"><i id="qBar" style="width:0"></i></div></div>
+    <div class="qcard">
+      <span class="qtag num" id="qNo">Q1</span>
+      <div class="qtext" id="qText"></div>
+      <div class="answers" id="answers"></div>
+      <div id="spqBox" hidden>
+        <div class="spq-val"><span class="num" id="spqShow">—</span><span class="num">%</span></div>
+        <input type="range" id="spqRange" min="1" max="100" step="1" value="50" aria-label="仕事の出来（%）">
+        <div class="spq-scale num"><span>1%</span><span>50%</span><span>100%</span></div>
+        <label class="spq-num" for="spqNum">数値で入力 <input type="number" id="spqNum" min="1" max="100" inputmode="numeric"> %</label>
+        <button class="btn" id="spqNext" disabled>次へ</button>
+      </div>
+    </div>
+    <div class="qnav">
+      <button class="link" id="backBtn">← 前の質問</button>
+      <button class="link" id="quitBtn">最初に戻る</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" hidden>
+    <div class="rhead">
+      <span class="eyebrow">あなたのチェック結果</span>
+      <h2 id="rTitle"></h2>
+      <p id="rLead"></p>
+    </div>
+
+    <div class="panel">
+      <div class="viz">
+        <div class="figure">
+          <svg viewBox="0 0 200 300" role="img" aria-label="体のどこに負担がかかっているかを色で示した図">
+            <!-- neutral parts -->
+            <path d="M64 98 L136 98 L130 170 L70 170 Z" fill="var(--body)"/>
+            <path d="M65 100 L52 104 L43 150 L58 153 Z" fill="var(--body)"/>
+            <path d="M135 100 L148 104 L157 150 L142 153 Z" fill="var(--body)"/>
+            <circle cx="46" cy="214" r="8" fill="var(--body)"/>
+            <circle cx="154" cy="214" r="8" fill="var(--body)"/>
+            <path d="M64 206 L98 206 L95 292 L72 292 Z" fill="var(--body)"/>
+            <path d="M102 206 L136 206 L128 292 L105 292 Z" fill="var(--body)"/>
+            <!-- zones -->
+            <ellipse class="zone" data-z="head" cx="100" cy="38" rx="24" ry="28" fill="var(--body)"/>
+            <path class="zone" data-z="neck" d="M90 62 L110 62 L111 78 Q132 80 138 98 L62 98 Q68 80 89 78 Z" fill="var(--body)"/>
+            <path class="zone" data-z="arm" d="M43 150 L58 153 L55 205 L39 203 Z" fill="var(--body)"/>
+            <path class="zone" data-z="arm" d="M157 150 L142 153 L145 205 L161 203 Z" fill="var(--body)"/>
+            <path class="zone" data-z="back" d="M70 170 L130 170 L137 206 L63 206 Z" fill="var(--body)"/>
+          </svg>
+        </div>
+        <div class="meters" id="meters"></div>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--good)"></i>良好</span>
+        <span><i class="dot" style="background:var(--warn)"></i>ケアがおすすめ</span>
+        <span><i class="dot" style="background:var(--care)"></i>重点ケア</span>
+      </div>
+      <div class="time" id="rTime"></div>
+      <div class="time" id="saveStatus" hidden></div>
+    </div>
+
+    <div class="panel spq-res">
+      <div class="spq-head">仕事のパフォーマンス（SPQ）</div>
+      <div class="spq-grid">
+        <div><span class="lbl">発揮できている割合</span><b class="num" id="rPerf"></b></div>
+        <div><span class="lbl">プレゼンティーズム（損失割合）</span><b class="num" id="rLoss"></b></div>
+      </div>
+      <div class="meter spqbar"><i id="rPerfBar" style="background:var(--teal)"></i><i id="rLossBar" style="background:var(--care)"></i></div>
+      <p class="spq-note">病気やけががないときの自分の仕事の出来を100%としたときの、過去4週間の自己評価です。損失割合は「100% − 回答値」で算出しています。</p>
+    </div>
+
+    <h3 class="sec" id="planTitle">あなたのおすすめケア</h3>
+    <p class="secnote" id="planNote"></p>
+    <div class="plan" id="plan"></div>
+
+    <div id="others"></div>
+
+    <div class="actions">
+      <button class="btn ghost" id="retryBtn">もう一度チェックする</button>
+    </div>
+
+    <p class="notice">このチェックは日頃のセルフケアを選ぶための目安で、医学的な診断ではありません。強い痛み、しびれ、めまい、急に起きた頭痛などがある場合はケアを控え、医療機関に相談してください。ケアはいずれも痛みのない範囲で行いましょう。</p>
+  </section>
+</div>
+
+<script>
+const CATS = {
+  head:{name:"頭痛・目の疲れ", color:"#1E9BB0", slide:"P.11〜13", ex:[
+    {t:"セルフマッサージ", n:"こめかみ周辺をやさしくほぐす", m:"側頭筋", steps:["人差し指と中指の腹を、左右のこめかみ周辺に軽く当てます。","痛みのない程度のやさしい圧で、ゆっくり円を描くようにほぐします。"], d:["20〜30","秒"]},
+    {t:"セルフマッサージ", n:"後頭部から首の付け根をほぐす", m:"後頭下筋群", steps:["両手の指先を、後頭部と首の境目にあるくぼみ付近に当てます。","指の腹で軽く圧をかけ、小さな円を描くようにほぐします。"], d:["20〜30","秒"]}
+  ]},
+  neck:{name:"首・肩こり", color:"#3AAE9A", slide:"P.14〜18", ex:[
+    {t:"セルフストレッチ", n:"首の後ろから肩甲骨につながる筋肉を伸ばす", m:"肩甲挙筋", steps:["伸ばしたい側の腕を背中に回し、反対側の手を頭の上に添えます。","反対側の脇の下を見るように首をゆっくり倒し、首の後ろから肩にかけて伸ばします。"], d:["10","秒×3セット（左右）"]},
+    {t:"セルフストレッチ", n:"首の前側から側面の筋肉を伸ばす", m:"胸鎖乳突筋", steps:["伸ばしたい側の鎖骨の下に反対の手を当て、軽く押さえます。","首を斜め後ろに傾け、首の前側から側面をゆっくり伸ばします。"], d:["10","秒×3セット（左右）"]},
+    {t:"セルフマッサージ", n:"胸まわりの筋肉をほぐす", m:"大胸筋", steps:["反対側の手で、鎖骨の下から脇の手前にかけての胸の筋肉に当てます。","拳（または指の腹）で軽く圧をかけ、小さな円を描くようにやさしくほぐします。"], d:["30〜40","秒（左右）"]},
+    {t:"セルフマッサージ", n:"脇の下から背中の筋肉をほぐす", m:"広背筋", steps:["反対側の手を使い、脇の下より少し下の背中の筋肉に当てます。","手で筋肉を包み込むようにつかみ、軽く圧をかけながら小さな円を描くようにほぐします。"], d:["30〜40","秒（左右）"]}
+  ]},
+  arm:{name:"腕の疲れ", color:"#5BBE76", slide:"P.19〜21", ex:[
+    {t:"セルフマッサージ", n:"前腕の筋肉をほぐす", m:"前腕伸筋群", steps:["片腕を前に伸ばし、反対側の手で前腕の筋肉を包み込むようにつかみます。","前腕の筋肉をまんべんなく、やさしく揉みほぐします。"], d:["30〜40","秒（左右）"]},
+    {t:"セルフストレッチ", n:"前腕の筋肉を伸ばす", m:"前腕伸筋群", steps:["片腕を前に伸ばし、手のひらを下に向けて手首を曲げます。","反対側の手で手の甲をつかんで手前に引き、前腕の外側の筋肉をゆっくり伸ばします。"], d:["10","秒×3セット（左右）"]}
+  ]},
+  back:{name:"腰痛", color:"#86C95A", slide:"P.22〜26", ex:[
+    {t:"セルフストレッチ", n:"股関節の付け根を伸ばす", m:"腸腰筋", steps:["椅子に浅く腰かけ、片脚を大きく後ろに伸ばします。","背筋を伸ばし、後ろ脚のお尻を締めるように意識して股関節の付け根を伸ばします。"], d:["10","秒×3セット（左右）"]},
+    {t:"セルフストレッチ", n:"お尻の筋肉を伸ばす", m:"大殿筋", steps:["椅子に座り、片方の足首を反対側の膝の上に乗せます。","背筋を伸ばしたまま上体をゆっくり前に倒し、お尻の筋肉を伸ばします。"], d:["10","秒×3セット（左右）"]},
+    {t:"セルフストレッチ", n:"腰を反らして伸ばす", m:"体幹伸展", steps:["椅子に浅く座り、両手を腰に当てて骨盤を固定します。","上体をゆっくり後ろに反らし、その姿勢を保ちます。"], d:["10","秒×3セット"]},
+    {t:"セルフストレッチ", n:"体の側面を伸ばす", m:"体幹側屈", steps:["椅子に座ったまま、片側の腕を頭上に伸ばします。","上げた腕と反対側に体をゆっくり倒し、体の側面を伸ばします。"], d:["10","秒×3セット（左右）"]}
+  ]}
+};
+const ORDER = ["head","neck","arm","back"];
+const Q = [
+  ["head","夕方になると、頭が重い・締めつけられる感じがある"],
+  ["neck","首や肩が張って、思わず肩を回したくなる"],
+  ["arm","マウスやキーボードの操作で、手首や前腕がだるくなる"],
+  ["back","1時間以上、続けて座りっぱなしになることが多い"],
+  ["head","画面を見続けると、目の奥が疲れる・かすむ"],
+  ["neck","気づくと頭が前に出て、背中が丸まっている"],
+  ["arm","肘の外側や手の甲側に、張りや重さを感じる"],
+  ["back","立ち上がるとき、腰がこわばって伸ばしにくい"],
+  ["head","こめかみや後頭部を、無意識に押したり揉んだりしている"],
+  ["neck","振り向く・上を向くときに、首がつっぱる"],
+  ["arm","仕事終わりに、腕全体が重く疲れている"],
+  ["back","腰やお尻のまわりが、張る・重く感じる"]
+];
+const A = [["はい","よく当てはまる",2],["ときどき","少し当てはまる",1],["いいえ","当てはまらない",0]];
+const LEVEL = s => s>=4 ? {k:"care",l:"重点ケア"} : s>=2 ? {k:"warn",l:"ケアがおすすめ"} : {k:"good",l:"良好"};
+
+const $ = id => document.getElementById(id);
+const SPQ_TEXT = "病気やけががないときに発揮できる仕事の出来を100%として過去4週間の自身の仕事を評価してください。";
+const TOTAL = Q.length + 1;
+let step=0, answers=new Array(Q.length).fill(null), spq=null, t0=0;
+
+$("catList").innerHTML = ORDER.map(k=>`<div class="cat"><span class="dot" style="background:${CATS[k].color}"></span>${CATS[k].name}</div>`).join("");
+
+function show(id){ ["intro","quiz","result"].forEach(s=>$(s).hidden = s!==id); window.scrollTo({top:0}); }
+
+function setSpq(v){
+  spq = v;
+  $("spqShow").textContent = v==null ? "—" : v;
+  if(v!=null){ $("spqRange").value=v; if(+$("spqNum").value!==v) $("spqNum").value=v; }
+  $("spqNext").disabled = v==null;
+}
+function renderQ(){
+  const isSpq = step===0;
+  $("qCount").textContent = `${step+1} / ${TOTAL}`;
+  $("qBar").style.width = (step/TOTAL*100)+"%";
+  $("qNo").textContent = `Q${step+1}`;
+  $("spqBox").hidden = !isSpq;
+  $("answers").hidden = isSpq;
+  if(isSpq){
+    $("qText").textContent = SPQ_TEXT;
+    setSpq(spq);
+  } else {
+    const qi=step-1;
+    $("qText").textContent = Q[qi][1];
+    $("answers").innerHTML = A.map((a,i)=>`<button class="ans${answers[qi]===a[2]?' sel':''}" data-v="${a[2]}" id="ans${i}">${a[0]}<small>${a[1]}</small></button>`).join("");
+  }
+  $("backBtn").disabled = step===0;
+}
+$("answers").addEventListener("click",e=>{
+  const b=e.target.closest(".ans"); if(!b) return;
+  answers[step-1]=+b.dataset.v; b.classList.add("sel");
+  setTimeout(()=>{ if(step<Q.length){step++;renderQ();} else finish(); },160);
+});
+$("spqRange").addEventListener("input",e=>setSpq(+e.target.value));
+$("spqNum").addEventListener("input",e=>{
+  const v=parseInt(e.target.value,10);
+  setSpq(Number.isFinite(v) && v>=1 && v<=100 ? v : null);
+});
+$("spqNext").onclick=()=>{ if(spq!=null){ step=1; renderQ(); } };
+$("startBtn").onclick=()=>{ step=0; answers.fill(null); spq=null; $("spqNum").value=""; $("spqRange").value=50; t0=Date.now(); show("quiz"); renderQ(); };
+$("backBtn").onclick=()=>{ if(step>0){step--;renderQ();} };
+$("quitBtn").onclick=()=>show("intro");
+$("retryBtn").onclick=()=>show("intro");
+
+function exCard(e){
+  return `<article class="ex"><div class="ex-top"><div><span class="type">${e.m}の${e.t}</span><h4>${e.n}</h4></div>
+  <div class="dose">目安 <b>${e.d[0]}</b>${e.d[1]}</div></div>
+  <ol>${e.steps.map(s=>`<li>${s}</li>`).join("")}</ol></article>`;
+}
+
+function finish(){
+  const secs=Math.round((Date.now()-t0)/1000);
+  const sc={}; ORDER.forEach(k=>sc[k]=0);
+  Q.forEach(([c],i)=>sc[c]+=answers[i]||0);
+  const max=Math.max(...ORDER.map(k=>sc[k]));
+  const top=ORDER.filter(k=>sc[k]===max);
+  const allGood = max<=1;
+
+  // body map
+  document.querySelectorAll(".zone").forEach(z=>{
+    const k=z.dataset.z, lv=LEVEL(sc[k]).k;
+    z.setAttribute("fill", lv==="good" ? "var(--good)" : `var(--${lv})`);
+    z.classList.toggle("pulse", !allGood && top.includes(k));
+  });
+  // meters
+  $("meters").innerHTML = ORDER.map(k=>{
+    const lv=LEVEL(sc[k]);
+    return `<div class="mrow"><div class="mtop"><span>${CATS[k].name}</span><span class="chip ${lv.k}">${lv.l}</span></div>
+    <div class="meter"><i style="width:0;background:var(--${lv.k})" data-w="${Math.max(sc[k]/6*100,3)}"></i></div>
+    <span class="mscore num">${sc[k]} / 6</span></div>`;
+  }).join("");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".meter i").forEach(i=>i.style.width=i.dataset.w+"%")));
+  $("rTime").innerHTML = `回答時間 <span class="num">${secs}</span> 秒`;
+  const loss = 100 - spq;
+  $("rPerf").innerHTML = `${spq}<small>%</small>`;
+  $("rLoss").innerHTML = `${loss}<small>%</small>`;
+  $("rPerfBar").style.width = spq+"%";
+  $("rLossBar").style.width = loss+"%";
+
+  // headline + plan
+  const plan=$("plan"), others=$("others");
+  if(allGood){
+    $("rTitle").textContent="いまのところ、大きな負担は見られません";
+    $("rLead").textContent="良いコンディションを保てています。この状態を続けるために、気になったときに予防としてケアを取り入れましょう。";
+    $("planTitle").textContent="予防のためのおすすめケア";
+    $("planNote").textContent="長時間のデスクワークの合間に、1日1回どれか一つを取り入れるだけでも十分です。";
+    plan.innerHTML = `<div class="maintain"><b>このまま継続</b>　1時間に一度は立ち上がる、画面から目を離すなど、今の習慣を続けてください。</div>`
+      + exCard(CATS.neck.ex[0]) + exCard(CATS.back.ex[0]);
+    others.innerHTML="";
+  } else {
+    const names=top.map(k=>`「${CATS[k].name}」`).join("と");
+    $("rTitle").textContent=`いちばんケアしたいのは${names}です`;
+    $("rLead").textContent = top.length>1
+      ? "同じくらい負担が出ている部位が複数あります。まずは下のケアから、続けやすいものを選んでください。"
+      : `${CATS[top[0]].name}まわりに負担がたまりやすい状態です。下のケアを、作業の合間に取り入れてみましょう。`;
+    $("planTitle").textContent="あなたのおすすめケア";
+    $("planNote").textContent=`講座スライド ${top.map(k=>CATS[k].slide).join("・")} で紹介したエクササイズです。痛みのない範囲で行いましょう。`;
+    plan.innerHTML = top.map(k=>(top.length>1?`<h4 style="margin:6px 0 0;font-size:15px">${CATS[k].name}</h4>`:"")+CATS[k].ex.map(exCard).join("")).join("");
+    const rest=ORDER.filter(k=>!top.includes(k)).sort((a,b)=>sc[b]-sc[a]);
+    others.innerHTML = `<h3 class="sec">ほかの部位のケア</h3><p class="secnote">「ケアがおすすめ」の部位は、余裕があれば合わせて行いましょう。</p><div style="display:grid;gap:10px">`
+      + rest.map(k=>{const lv=LEVEL(sc[k]);return `<details class="more"${lv.k!=="good"?"":""}><summary><span>${CATS[k].name}　<span class="chip ${lv.k}">${lv.l}</span></span></summary><div class="plan">${CATS[k].ex.map(exCard).join("")}</div></details>`}).join("")
+      + `</div>`;
+  }
+  show("result");
+
+  const payload = {
+    secs, spq, loss,
+    answers: answers.slice(),
+    scores: ORDER.map(k=>sc[k]),
+    levels: ORDER.map(k=>LEVEL(sc[k]).l),
+    top: allGood ? "なし（良好）" : top.map(k=>CATS[k].name).join("・")
+  };
+  if (typeof window.onCheckResult === "function") window.onCheckResult(payload);
+}
+</script>
+
+<script>
+// スプレッドシートへの記録（Apps Script 版のみ）
+window.onCheckResult = function (payload) {
+  var el = document.getElementById("saveStatus");
+  el.hidden = false;
+  el.textContent = "結果を記録しています…";
+  google.script.run
+    .withSuccessHandler(function () { el.textContent = "結果を記録しました（匿名）"; })
+    .withFailureHandler(function () { el.textContent = "結果を記録できませんでした。通信環境を確認して、もう一度チェックしてください。"; })
+    .saveResult(payload);
+};
+</script>
+</body>
+</html>
